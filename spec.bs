@@ -15,6 +15,7 @@ Editor: Stephen McGruer, w3cid 96463, Google https://www.google.com/, smcgruer@c
 Former Editor: Rouslan Solomakhin, w3cid 83784, Google https://www.google.com/, rouslan@chromium.org
 !Contributors: <a href="mailto:ij@w3.org">Ian Jacobs</a> (<a href="https://w3.org">W3C</a>)
 !Contributors: <a href="mailto:nburris@chromium.org">Nick Burris</a> (<a href="https://www.google.com">Google</a>)
+!Contributors: <a href="mailto:darwinyang@chromium.org">Darwin Yang</a> (<a href="https://www.google.com">Google</a>)
 Abstract: Secure Payment Confirmation (SPC) is a Web API to support streamlined
   authentication during a payment transaction. It is designed to scale authentication
   across merchants, to be used within a wide range of authentication protocols, and
@@ -949,6 +950,50 @@ NOTE: The use of the static {{PaymentRequest/securePaymentConfirmationAvailabili
 
 Note: For privacy considerations of this API, see
       [[#sctn-fingerprinting-via-is-secure-payment-confirmation-available]].
+
+## Availability of Secure Payment Confirmation capabilities ## {#sctn-secure-payment-confirmation-capabilities}
+
+A static API is added to {{PaymentRequest}} in order to provide developers a
+method of determining the availability of Secure Payment Confirmation's
+capabilities. This method,
+{{PaymentRequest/getSecurePaymentConfirmationCapabilities()}}, has no arguments
+and returns a record of capability keys to Boolean values.
+
+<xmp class="idl">
+partial interface PaymentRequest {
+    static Promise<SecurePaymentConfirmationCapabilities> getSecurePaymentConfirmationCapabilities();
+};
+
+typedef record<DOMString, boolean> SecurePaymentConfirmationCapabilities;
+</xmp>
+
+[=map/Keys=] in {{SecurePaymentConfirmationCapabilities}} must be sorted in
+ascending lexicographical order. The set of [=map/keys=] should contain the set
+of [=enumeration values=] of {{SecurePaymentConfirmationCapability}}, but the
+client MAY omit keys as it deems necessary; see
+[[#sctn-fingerprinting-via-get-secure-payment-confirmation-capabilities]].
+
+When the value for a given capability is `true`, the feature is known to be
+currently supported by SPC.
+When the value for a given capability is `false`, the feature is known to be not
+currently supported by SPC.
+When a capability does not [=map/exist=] as a key, the availability of the SPC
+feature is not known.
+
+This API allows a developer to perform the following check when deciding whether
+to initiate a SPC flow:
+
+<pre class="example" id="capabilities-example" highlight="js">
+if (PaymentRequest && PaymentRequest.getSecurePaymentConfirmationCapabilities) {
+    const capabilities = await PaymentRequest.getSecurePaymentConfirmationCapabilities();
+    if (capabilities.browserBoundKeyHardware) {
+        // When the SPC API is used, hardware backed BBKs will be available.
+    }
+}
+</pre>
+
+Note: For privacy considerations of this API, see
+[[#sctn-fingerprinting-via-get-secure-payment-confirmation-capabilities]].
 
 ## Steps to validate payment method data ## {#sctn-steps-to-validate-payment-method-data}
 
@@ -2026,6 +2071,31 @@ following members:
          when describing this logo on a UX).
 </dl>
 
+## <dfn enum>SecurePaymentConfirmationCapability</dfn> Enumeration ## {#sctn-secure-payment-confirmation-capability-enumeration}
+
+<xmp class="idl">
+enum SecurePaymentConfirmationCapability {
+  "browserBoundKeyHardware",
+};
+</xmp>
+
+This enumeration defines a limited set of secure payment confirmation
+capabilities which a developer may evaluate to offer certain workflows and
+experiences to users.
+
+Developers may use the
+{{PaymentRequest/getSecurePaymentConfirmationCapabilities()}} method of
+{{PaymentRequest}} to obtain a description of available capabilities.
+
+<div dfn-type="enum-value" dfn-for="SecurePaymentConfirmationCapability">
+    :   <dfn>browserBoundKeyHardware</dfn>
+    ::  Indicates that the Secure Payment Confirmation API is capable of using browser bound
+        keys that are stored in hardware secure elements on the device.
+
+        See [[#sctn-browser-bound-key-store]] for more details.
+
+</div>
+
 # Permissions Policy integration # {#sctn-permissions-policy}
 
 This specification uses the "[=payment permission string|payment=]"
@@ -2446,6 +2516,24 @@ when a specific reason is known, should it wish to in order to preserve user
 privacy. This might be done in the case, e.g., that a user agent has detected
 that the current frame has already accessed other APIs that pose a
 fingerprinting risk.
+
+## Fingerprinting via getSecurePaymentConfirmationCapabilities ## {#sctn-fingerprinting-via-get-secure-payment-confirmation-capabilities}
+
+The {{getSecurePaymentConfirmationCapabilities}} API presents a possible
+fingerprinting risk, as it can silently return specific information about the
+capabilities of a user's device. These reasons are not believed to leak
+significant information, but should be considered:
+
+- {{SecurePaymentConfirmationCapability/browserBoundKeyHardware}}:
+    some risk of fingerprinting of whether a user's device has a hardware
+    security chip. But this will already be available through the [[DBSC]] API.
+
+In addition to the above considerations, this specification allows a user agent
+to choose to omit capabilities information even when it is known, should it wish
+to in order to preserve user privacy. It is also preferred for user agents to
+omit a key from the returned record rather than returning a value of false for
+unavailable capabilities as it provides less fingerprinting surface than
+explicitly confirming a feature is unsupported.
 
 ## User opt out ## {#sctn-user-opt-out}
 
