@@ -956,8 +956,8 @@ Note: For privacy considerations of this API, see
 A static API is added to {{PaymentRequest}} in order to provide developers a
 method of determining the availability of Secure Payment Confirmation's
 capabilities. This method,
-{{PaymentRequest/getSecurePaymentConfirmationCapabilities()}}, has no arguments
-and returns a record of capability keys to Boolean values.
+{{PaymentRequest/getSecurePaymentConfirmationCapabilities()}}, returns a record
+of capability keys to Boolean values.
 
 <xmp class="idl">
 partial interface PaymentRequest {
@@ -967,21 +967,23 @@ partial interface PaymentRequest {
 typedef record<DOMString, boolean> SecurePaymentConfirmationCapabilities;
 </xmp>
 
-[=map/Keys=] in {{SecurePaymentConfirmationCapabilities}} must be sorted in
-ascending lexicographical order. The set of [=map/keys=] should contain the set
+[=map/Keys=] in {{SecurePaymentConfirmationCapabilities}} MUST be sorted in
+ascending lexicographical order. The set of [=map/keys=] SHOULD contain the set
 of [=enumeration values=] of {{SecurePaymentConfirmationCapability}}, but the
-client MAY omit keys as it deems necessary; see
+client MAY omit [=map/keys=] as it deems necessary; see
 [[#sctn-fingerprinting-via-get-secure-payment-confirmation-capabilities]].
 
 When the value for a given capability is `true`, the feature is known to be
-currently supported by SPC.
-When the value for a given capability is `false`, the feature is known to be not
-currently supported by SPC.
-When a capability does not [=map/exist=] as a key, the availability of the SPC
-feature is not known.
+currently supported by Secure Payment Confirmation.
 
-This API allows a developer to perform the following check when deciding whether
-to initiate a SPC flow:
+When the value for a given capability is `false`, the feature is known to be not
+currently supported by Secure Payment Confirmation.
+
+When a capability does not [=map/exist=] as a key, the availability of the
+Secure Payment Confirmation feature is not known.
+
+This API allows a developer to check for specific supported features when
+deciding whether to initiate a Secure Payment Confirmation flow, as follows:
 
 <pre class="example" id="capabilities-example" highlight="js">
 if (PaymentRequest && PaymentRequest.getSecurePaymentConfirmationCapabilities) {
@@ -994,6 +996,28 @@ if (PaymentRequest && PaymentRequest.getSecurePaymentConfirmationCapabilities) {
 
 Note: For privacy considerations of this API, see
 [[#sctn-fingerprinting-via-get-secure-payment-confirmation-capabilities]].
+
+### <dfn enum>SecurePaymentConfirmationCapability</dfn> Enumeration ### {#sctn-secure-payment-confirmation-capability-enumeration}
+
+<xmp class="idl">
+enum SecurePaymentConfirmationCapability {
+  "browserBoundKeyHardware",
+};
+</xmp>
+
+This enumeration defines a limited set of Secure Payment Confirmation
+capabilities which a developer may evaluate to offer certain workflows and
+experiences to users.
+
+<div dfn-type="enum-value" dfn-for="SecurePaymentConfirmationCapability">
+    :   <dfn>browserBoundKeyHardware</dfn>
+    ::  Indicates that the Secure Payment Confirmation API is capable of using
+        [=browser bound keys=] that are stored in hardware secure elements on
+        the device.
+
+        See [[#sctn-browser-bound-key-store]] for more details.
+
+</div>
 
 ## Steps to validate payment method data ## {#sctn-steps-to-validate-payment-method-data}
 
@@ -2071,31 +2095,6 @@ following members:
          when describing this logo on a UX).
 </dl>
 
-## <dfn enum>SecurePaymentConfirmationCapability</dfn> Enumeration ## {#sctn-secure-payment-confirmation-capability-enumeration}
-
-<xmp class="idl">
-enum SecurePaymentConfirmationCapability {
-  "browserBoundKeyHardware",
-};
-</xmp>
-
-This enumeration defines a limited set of secure payment confirmation
-capabilities which a developer may evaluate to offer certain workflows and
-experiences to users.
-
-Developers may use the
-{{PaymentRequest/getSecurePaymentConfirmationCapabilities()}} method of
-{{PaymentRequest}} to obtain a description of available capabilities.
-
-<div dfn-type="enum-value" dfn-for="SecurePaymentConfirmationCapability">
-    :   <dfn>browserBoundKeyHardware</dfn>
-    ::  Indicates that the Secure Payment Confirmation API is capable of using browser bound
-        keys that are stored in hardware secure elements on the device.
-
-        See [[#sctn-browser-bound-key-store]] for more details.
-
-</div>
-
 # Permissions Policy integration # {#sctn-permissions-policy}
 
 This specification uses the "[=payment permission string|payment=]"
@@ -2521,19 +2520,22 @@ fingerprinting risk.
 
 The {{getSecurePaymentConfirmationCapabilities}} API presents a possible
 fingerprinting risk, as it can silently return specific information about the
-capabilities of a user's device. These reasons are not believed to leak
-significant information, but should be considered:
+capabilities - or lack thereof - of a user's device.
+
+To reduce this risk, user agents SHOULD prefer to omit a key from the returned
+record rather than returning a value of `false`. Omitting the key (as described
+in [[#sctn-secure-payment-confirmation-capabilities]]) provides less
+fingerprinting surface than explicitly confirming a feature is unsupported. User
+agents MAY also choose to omit a capability even when supported, in order to
+preserve user privacy.
+
+Considerations for specific capabilities listed in
+{{SecurePaymentConfirmationCapability}}:
 
 - {{SecurePaymentConfirmationCapability/browserBoundKeyHardware}}:
-    some risk of fingerprinting of whether a user's device has a hardware
-    security chip. But this will already be available through the [[DBSC]] API.
-
-In addition to the above considerations, this specification allows a user agent
-to choose to omit capabilities information even when it is known, should it wish
-to in order to preserve user privacy. It is also preferred for user agents to
-omit a key from the returned record rather than returning a value of false for
-unavailable capabilities as it provides less fingerprinting surface than
-explicitly confirming a feature is unsupported.
+    risk of revealing that a user's device has a hardware security chip. This
+    information may already be silently available via other web APIs, such as
+    [[DBSC]].
 
 ## User opt out ## {#sctn-user-opt-out}
 
