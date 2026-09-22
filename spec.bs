@@ -1115,9 +1115,9 @@ input {{PaymentRequest}} |request| and {{SecurePaymentConfirmationRequest}} |dat
             [=ASCII case-insensitive=] match, set |matched| to true and break.
 
         1. If at least one of |tag| or |dialogLanguageTag| consists only of a
-            primary [=language subtag=], and their primary [=language subtags=]
-            are an [=ASCII case-insensitive=] match, set |matched| to true and
-            break.
+            primary language subtag (see [[BCP47]]), and their primary language
+            subtags are an [=ASCII case-insensitive=] match, set |matched| to
+            true and break.
 
     1. If |matched| is false, throw a "{{NotSupportedError}}" {{DOMException}}.
 
@@ -2658,7 +2658,7 @@ displayable strings they provide as input to the API (e.g.,
     determine if the Secure Payment Confirmation dialog will be displayed in the
     locale set in {{SecurePaymentConfirmationRequest/locale}}.
 
-* Fall back to a [=language tag=] containing only a primary [=language subtag=]
+* Fall back to a [=language tag=] containing only a primary language subtag
     (e.g., `"en"`) if a match cannot be found for a locale with additional
     [=language subtags=].
 
