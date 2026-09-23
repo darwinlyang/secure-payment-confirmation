@@ -1125,6 +1125,10 @@ input {{PaymentRequest}} |request| and {{SecurePaymentConfirmationRequest}} |dat
           RP know that the dialog locale does not match any of the requested
           locale preferences.
 
+    NOTE: Standard [=language negotiation=] is not applied here because the
+          resulting language or locale will not be used for the Secure Payment
+          Confirmation dialog.
+
     NOTE: The {{SecurePaymentConfirmationRequest/locale}} is distinct from
           language or direction metadata associated with specific input
           members, in that it represents the caller's requested localized
